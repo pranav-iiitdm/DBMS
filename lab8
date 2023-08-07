@@ -1,0 +1,93 @@
+create table course_required(courses varchar(25));
+insert into course_required values('Databases');
+insert into course_required values('Programming Languages');
+
+create table course_taken(student_name varchar(15),courses varchar(25));
+insert into course_taken values('Robert','Databases');
+insert into course_taken values('Robert','Programming Languages');
+insert into course_taken values('David','Databases');
+insert into course_taken values('Hannah','Programming Languages');
+insert into course_taken values('Tom','Operating Systems');
+insert into course_taken values('David','Operating Systems');
+
+create table bank(bank_name varchar(6),state varchar(15));
+insert into bank values('SBI','ANDHRA PRADESH');
+insert into bank values('SBI','TAMILNADU');
+insert into bank values('SBI','KARNATAKA');
+insert into bank values('ICICI','TAMILNADU');
+insert into bank values('ICICI','KARNATAKA');
+
+create table account_holder(account_name varchar(15),bank_name varchar(6),state_name varchar(15));
+insert into account_holder values('Ramesh','ICICI','TAMILNADU');
+insert into account_holder values('Dinesh','ICICI','ANDHRA PRADESH');
+insert into account_holder values('Robert','ICICI','TAMILNADU');
+insert into account_holder values('Robert','ICICI','KARNATAKA');
+insert into account_holder values('Robert','ICICI','ANDHRA PRADESH');
+insert into account_holder values('Karthik','ICICI','ANDHRA PRADESH');
+
+--------------------------------------------------------------------------------------------------------------------
+
+
+1)
+a)
+create table q1 as
+select distinct student_name from course_taken;
+
+b)
+create table q2 as
+select distinct s.student_name,c.courses from course_taken s,course_required c;
+
+c)
+create table q3 as
+(select student_name,courses from q2) minus(select student_name,courses from course_taken);
+
+d)
+create table q4 as
+select distinct student_name from q3;
+
+e)
+create table q5 as
+select distinct student_name from course_taken minus(select student_name from q4);
+
+---------------------------------------------------------------------------------------------------------------------
+
+2)
+a)
+select distinct student_name from
+(select distinct s.student_name,c.courses from course_taken s,course_required c
+minus (select student_name,courses from course_taken));
+
+b)
+select distinct student_name from
+(select distinct s.student_name,c.courses from course_taken s,course_required c 
+minus(select distinct s.student_name,c.courses from course_taken s,course_required c
+intersect(select student_name,courses from course_taken)));
+
+c)
+select distinct student_name from course_taken 
+minus
+select c1.student_name from course_taken c1,course_taken c2
+where c1.student_name=c2.student_name and c1.courses<>c2.courses 
+and c1.courses in(select courses from course_required) and c2.courses in(select courses from course_required);
+
+---------------------------------------------------------------------------------------------------------------------
+
+3)
+a)
+select account_name from account_holder minus(select account_name from
+(select distinct a.account_name , b.bank_name from account_holder a,bank b
+minus(select account_name,bank_name from account_holder)));
+
+b)
+select bank_name from bank minus(select bank_name from
+(select distinct b1.bank_name,b2.state from bank b1,bank b2
+minus(select bank_name,state from bank)));
+
+c)
+select distinct b1.bank_name,b2.state from bank b1,bank b2
+minus(select bank_name,state from bank);
+
+d)
+select account_name from account_holder minus(select account_name from
+(select distinct a.account_name , b.state_name from account_holder a,account_holder b
+minus(select account_name,state_name from account_holder)));

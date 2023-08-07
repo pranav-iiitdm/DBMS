@@ -1,0 +1,93 @@
+1)
+select * from professor 
+where startYear =(select min(startYear) from professor where empId in(select hod from department)) 
+and empId in(select hod from department);
+
+2)
+select courseId from teaching where empId 
+=(select empId from professor where empId =(select empId from professor
+where startYear=(select min(startYear) from professor where deptNo=(select deptId from department where name='Biology'))
+and deptNo=(select deptId from department where name='Biology')));
+
+
+3)
+select * from course c
+where c.courseId in(select c1.courseId from course c1, prerequisite p 
+where c1.courseId = p.courseId group by c1.deptNo, c1.courseId
+having count(p.prereqcourse) = (select max(count(p1.prereqcourse))
+from course c2, prerequisite p1 where c2.courseId=p1.courseId
+group by c2.deptNo, c2.courseId having c1.deptNo=c2.deptNo));
+
+
+4)
+select facWise.empId,avg(students) as avgEnroll from 
+(select t.empId, e.year, e.sem, count(rollNo) as students from enrollment e,teaching t
+where e.courseId=t.courseId group by t.empId,e.year,e.sem
+having e.year>2001 and e.year<2005) facWise
+group by facWise.empId;
+
+5)
+select * from enrollment 
+where courseId in(select courseId from course 
+where deptNo=(select deptId from department where name='Comp. Sci.')) and year=2004 and sem='even';
+
+6)
+select sem,
+(select min(credits) from course c,teaching t where c.courseId=t.courseId) as min,
+(select max(credits) from course c,teaching t where c.courseId=t.courseId) as max,
+(select avg(credits) from course c,teaching t where c.courseId=t.courseId) as avg from teaching
+group by sem;
+
+7)
+select count(grade),grade from enrollment e
+where courseId in(select courseId from teaching 
+where empId in(select hod from department)) and sem='even'
+group by grade
+having grade<>'S' and grade<>'U';
+
+8) 
+-- select count(rollNo),deptNo from student
+-- where deptNo in(select deptNo from professor where sex='female') and rollNo in(select rollNo from enrollment e1
+-- where grade > ANY(select grade from enrollment e2 where e1.rollNo=e2.rollNo))
+-- group by deptNo; 
+
+
+create table grades as 
+select e.rollNo as rollNo, e.courseId as courseId, e.grade as grade, t.empId as empId,
+e.sem as sem, p.sex as sex, p.deptNo as deptNo from enrollment e, teaching t, professor p
+where e.courseId=t.courseId and t.empId=p.empId;
+
+update grades set gradeNum=10 where grade='S';
+update grades set gradeNum=9 where grade='A';
+update grades set gradeNum=8 where grade='B';
+update grades set gradeNum=7 where grade='C';
+update grades set gradeNum=6 where grade='D';
+update grades set gradeNum=5 where grade='E';
+update grades set gradeNum=4 where grade='U';
+
+a)
+select g.sex,g.deptNo,count(g.rollNo) as totalRoll from grades g
+where g.sex='female' and exists(select * from grades g1
+where g1.sex=g.sex and g.deptNo=g1.deptNo and g1.gradeNum < g.gradeNum)
+group by g.deptNo, g.sex;
+
+b)
+select g.sex,g.deptNo,g.sem,count(g.rollNo) as totalRoll from grades g
+where g.sex='female' and g.sem='even' and not exists(select * from grades g1
+where g1.sex=g.sex and g.deptNo=g1.deptNo and g1.gradeNum > g.gradeNum)
+group by g.deptNo, g.sex, g.sem;
+
+
+
+
+
+
+
+-- select deptNo, courseId
+-- from course c1
+-- where c1.courseId in (select t1.courseId
+-- from (select p1.courseId, count(preReqCourse) from prerequisite p1 where p1.courseId in 
+-- (select courseId from course c2 where c2.deptNo=c1.deptNo ) 
+-- group by p1.courseId) t1 where t1.count(preReqCourse)=(select max(count(preReqCourse)) 
+-- from (select p1.courseId, count(preReqCourse) from prerequisite p1 
+-- where p1.courseId in (select courseId from course c2 where c2.deptNo=c1.deptNo ) group by p1.courseId)))
